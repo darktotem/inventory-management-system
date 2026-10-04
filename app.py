@@ -167,13 +167,39 @@ def parse_stock(value):
 # -----------------------------------------------------------------------------
 # PAGE ROUTES
 # -----------------------------------------------------------------------------
-
+@app.route("/")
+def home():
+    return render_template("index.html")
 
 # -----------------------------------------------------------------------------
 # AUTHENTICATION ROUTES
 # -----------------------------------------------------------------------------
 
-
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.get_json(silent=True) or {}
+    username = str(data.get("username", "")).strip()
+    password = str(data.get("password", ""))
+ 
+    user = next((u for u in users if u["username"] == username), None)
+    if not user or not verify_password(password, user["password_hash"]):
+        return jsonify({"error": "Invalid username or password"}), 401
+ 
+    session["username"] = username  # Flask remembers this across requests
+    return jsonify({"message": "Login successful", "username": username}), 200
+ 
+ 
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.pop("username", None)
+    return jsonify({"message": "Logged out successfully"}), 200
+ 
+ 
+@app.route("/me", methods=["GET"])
+def me():
+    username = current_username()
+    return jsonify({"logged_in": bool(username), "username": username}), 200
+ 
   # -------------------------------------------------------------------------
     # SESSION EXAMPLE
     # -------------------------------------------------------------------------
