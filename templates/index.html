@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Admin Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <main class="page-shell">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">Retail Admin Portal</p>
+                <h1>Inventory Management System</h1>
+            </div>
+            <div id="userBadge" class="user-badge hidden"></div>
+        </header>
+
+        <p id="notice" class="notice hidden"></p>
+
+        <!-- LOGIN: POST /login -->
+        <section id="authSection" class="auth-single">
+            <article class="panel">
+                <h2>Admin login</h2>
+                <p>Logging in creates a Flask session for this browser. Demo account: admin / admin123</p>
+                <form id="loginForm">
+                    <label>Username
+                        <input id="loginUsername" required autocomplete="username">
+                    </label>
+                    <label>Password
+                        <input id="loginPassword" type="password" required autocomplete="current-password">
+                    </label>
+                    <button type="submit">Login</button>
+                </form>
+                <p id="loginMessage" class="message"></p>
+            </article>
+        </section>
+
+        <section id="appSection" class="hidden">
+            <div class="dashboard-actions">
+                <div>
+                    <h2>Inventory Dashboard</h2>
+                    <p>Manage products and stock levels.</p>
+                </div>
+                <button id="logoutButton" class="secondary">Logout</button>
+            </div>
+
+            <!-- Calculated in the browser from GET /inventory -->
+            <div class="stats-strip">
+                <div><strong id="statItems">0</strong> products</div>
+                <div><strong id="statUnits">0</strong> units in stock</div>
+                <div><strong id="statValue">KES 0.00</strong> stock value</div>
+                <div><strong id="statLow">0</strong> low or out of stock</div>
+            </div>
+
+            <div class="content-grid">
+                <!-- ADD: POST /inventory -->
+                <article class="panel">
+                    <h3>Add Item</h3>
+                    <p>Enter a barcode and the details fill in from OpenFoodFacts. Name is optional if the barcode is found.</p>
+                    <form id="itemForm">
+                        <label>Product name
+                            <input id="addName" placeholder="e.g. Organic Almond Milk">
+                        </label>
+                        <label>Brand
+                            <input id="addBrand" placeholder="e.g. Silk">
+                        </label>
+                        <label>Barcode
+                            <input id="addBarcode" inputmode="numeric" placeholder="e.g. 3017620422003">
+                        </label>
+                        <label>Price (KES)
+                            <input id="addPrice" type="number" step="0.01" min="0" required>
+                        </label>
+                        <label>Stock
+                            <input id="addStock" type="number" step="1" min="0" required>
+                        </label>
+                        <button type="submit">Add Item</button>
+                    </form>
+                </article>
+
+                <!--finding API -->
+                <article class="panel">
+                    <h3>Find on OpenFoodFacts</h3>
+                    <p>Search by barcode or product name. Searching does not change your inventory.</p>
+                    <form id="findForm">
+                        <label>Barcode
+                            <input id="findBarcode" inputmode="numeric" placeholder="e.g. 5449000000996">
+                        </label>
+                        <label>Or product name
+                            <input id="findName" placeholder="e.g. spaghetti">
+                        </label>
+                        <button type="submit" class="secondary">Search</button>
+                    </form>
+                    <p id="findMessage" class="message"></p>
+                    <div id="findResult"></div>
+                </article>
+            </div>
+
+            <!-- VIEW / UPDATE / DELETE: GET /inventory, PATCH, DELETE, POST /enrich -->
+            <article class="panel inventory-panel">
+                <div class="filter-row">
+                    <div>
+                        <h3>Inventory</h3>
+                        <p>Edit price or stock, then press Save.</p>
+                    </div>
+                    <div class="filter-controls">
+                        <input id="itemSearch" type="search" placeholder="Search name or brand" aria-label="Search inventory">
+                        <select id="stockFilter" aria-label="Stock filter">
+                            <option value="All">All stock</option>
+                            <option value="Low">Low stock (under 10)</option>
+                            <option value="Out">Out of stock</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="itemList" class="item-list"></div>
+            </article>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
