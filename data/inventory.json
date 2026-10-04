@@ -1,0 +1,91 @@
+[
+  {
+    "id": 1,
+    "barcode": "3017620422003",
+    "status": 1,
+    "price": 850.0,
+    "stock": 40,
+    "product": {
+      "product_name": "Nutella",
+      "brands": "Ferrero",
+      "ingredients_text": "Sugar, palm oil, hazelnuts, skimmed milk powder, cocoa, lecithin, vanillin",
+      "categories": "Spreads, Sweet spreads, Hazelnut spreads",
+      "quantity": "400 g",
+      "nutriscore_grade": "e"
+    }
+  },
+  {
+    "id": 2,
+    "barcode": "5449000000996",
+    "status": 1,
+    "price": 50.0,
+    "stock": 120,
+    "product": {
+      "product_name": "Coca-Cola",
+      "brands": "Coca-Cola",
+      "ingredients_text": "Carbonated water, sugar, permitted food colour, acids, artificial flavouring",
+      "categories": "Beverages, Carbonated drinks, Sodas",
+      "quantity": "330 ml",
+      "nutriscore_grade": "e"
+    }
+  },
+  {
+    "id": 3,
+    "barcode": "0025293600232",
+    "status": 1,
+    "price": 650.0,
+    "stock": 25,
+    "product": {
+      "product_name": "Organic Almond Milk",
+      "brands": "Silk",
+      "ingredients_text": "Filtered water, almonds, cane sugar, sea salt, locust bean gum, sunflower lecithin",
+      "categories": "Beverages, Plant-based milks, Almond milks",
+      "quantity": "1.89 L",
+      "nutriscore_grade": "c"
+    }
+  },
+  {
+    "id": 4,
+    "barcode": "7622210449283",
+    "status": 1,
+    "price": 250.25,
+    "stock": 60,
+    "product": {
+      "product_name": "Prince Chocolate Biscuits",
+      "brands": "LU",
+      "ingredients_text": "Wheat flour, sugar, vegetable oils, cocoa powder, glucose syrup, salt",
+      "categories": "Snacks, Sweet snacks, Biscuits",
+      "quantity": "300 g",
+      "nutriscore_grade": "d"
+    }
+  },
+  {
+    "id": 5,
+    "barcode": "8076800195057",
+    "status": 1,
+    "price": 220.0,
+    "stock": 8,
+    "product": {
+      "product_name": "Spaghetti n.5",
+      "brands": "Barilla",
+      "ingredients_text": "Durum wheat semolina, water",
+      "categories": "Cereals and potatoes, Pasta, Spaghetti",
+      "quantity": "500 g",
+      "nutriscore_grade": "a"
+    }
+  },
+  {
+    "id": 6,
+    "barcode": "77712345890",
+    "status": 1,
+    "price": 250.0,
+    "stock": 45,
+    "product": {
+      "product_name": "BlueBand",
+      "brands": "Mangarine",
+      "ingredients_text": "",
+      "categories": "",
+      "quantity": ""
+    }
+  }
+]

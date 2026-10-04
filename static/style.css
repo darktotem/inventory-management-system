@@ -1,0 +1,130 @@
+:root {
+    --navy: #17324d;
+    --orange: #f58220;
+    --bg: #f4f7fa;
+    --panel: #ffffff;
+    --text: #22313f;
+    --muted: #687684;
+    --border: #dce4ea;
+    --danger: #b42318;
+    --success: #18794e;
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+.page-shell { width: min(1180px, 92%); margin: 0 auto; padding: 32px 0 56px; }
+.topbar, .dashboard-actions, .filter-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+.eyebrow { color: var(--orange); font-weight: 700; margin-bottom: 6px; }
+h1, h2, h3 { color: var(--navy); margin-top: 0; }
+h1 { margin-bottom: 8px; }
+.subtitle, .panel p { color: var(--muted); }
+.content-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    margin-top: 28px;
+    align-items: start;
+}
+.auth-single { max-width: 460px; margin: 28px auto 0; }
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(23, 50, 77, 0.06);
+}
+form { display: grid; gap: 16px; }
+label { font-weight: 700; color: var(--navy); display: grid; gap: 7px; }
+input, select, textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #bfcbd5;
+    border-radius: 8px;
+    font: inherit;
+    background: #fff;
+}
+textarea { resize: vertical; }
+button {
+    border: none;
+    border-radius: 8px;
+    padding: 11px 16px;
+    background: var(--orange);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+}
+button.secondary { background: var(--navy); }
+button.danger { background: var(--danger); }
+button.small { padding: 8px 10px; font-size: 13px; }
+.hidden { display: none !important; }
+.message { min-height: 20px; font-weight: 700; }
+.user-badge {
+    background: var(--navy);
+    color: #fff;
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-weight: 700;
+}
+
+/* Feedback banner (replaces alert popups for success/errors) */
+.notice {
+    margin: 18px 0 0;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+}
+.notice.ok { background: #e7f6ee; color: var(--success); border-left: 4px solid var(--success); }
+.notice.error { background: #fdeceb; color: var(--danger); border-left: 4px solid var(--danger); }
+
+/* Dashboard numbers */
+.stats-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 22px 0;
+}
+.stats-strip > div {
+    background: #fff4e8;
+    border-left: 4px solid var(--orange);
+    padding: 14px;
+    border-radius: 8px;
+}
+.stats-strip strong { display: block; font-size: 24px; color: var(--navy); margin-bottom: 4px; }
+
+/* Inventory */
+.inventory-panel { margin-top: 24px; }
+.filter-controls { display: flex; gap: 10px; flex-wrap: wrap; }
+.filter-controls input, .filter-controls select { width: auto; min-width: 190px; }
+.item-list { display: grid; gap: 14px; margin-top: 18px; }
+.item-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+}
+.item-card h4 { margin: 0 0 8px; color: var(--navy); }
+.item-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.badge { background: #eef3f7; padding: 5px 8px; border-radius: 999px; font-size: 13px; }
+.badge-warn { background: #fff1d6; color: #8a5300; font-weight: 700; }
+.badge-danger { background: #fdeceb; color: var(--danger); font-weight: 700; }
+.ingredients { font-size: 14px; color: var(--muted); margin: 8px 0; }
+.item-edit { display: grid; grid-template-columns: repeat(2, minmax(0, 160px)); gap: 12px; margin: 12px 0; }
+.item-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+#findResult { margin-top: 12px; }
+
+@media (max-width: 800px) {
+    .content-grid { grid-template-columns: 1fr; }
+    .stats-strip { grid-template-columns: repeat(2, 1fr); }
+    .topbar, .dashboard-actions, .filter-row { align-items: flex-start; flex-direction: column; }
+    .filter-controls { width: 100%; }
+    .filter-controls input, .filter-controls select { width: 100%; }
+}
