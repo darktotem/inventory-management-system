@@ -1,8 +1,8 @@
 import copy
 
+from flask import Flask
 from flask_bcrypt import Bcrypt
-from flask import Flask, render_template, request, jsonify, session
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Flask, render_template, request, jsonify, session, make_response
  
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -115,6 +115,13 @@ SEED_INVENTORY = [
  
 inventory = copy.deepcopy(SEED_INVENTORY)
 
+# Fields a client may change with PATCH.
+TOP_LEVEL_FIELDS = ["price", "stock"]
+PRODUCT_FIELDS = ["product_name", "brands", "ingredients_text", "categories", "quantity"]
+
+#Restore the seed data. Used by the unit tests.
+def reset_data():
+    inventory[:] = copy.deepcopy(SEED_INVENTORY)
 
 # -----------------------------------------------------------------------------
 # HELPER FUNCTIONS
@@ -175,7 +182,7 @@ def home():
 # AUTHENTICATION ROUTES
 # -----------------------------------------------------------------------------
 
-@app.route("/login", methods=["POST"])
+@app.route("/api/login", methods=["POST"])
 def login():
     data = request.get_json(silent=True) or {}
     username = str(data.get("username", "")).strip()
@@ -198,21 +205,23 @@ def login():
     # On later requests, Flask can read session["username"] and know who is using
     # the application without asking for the username again on every request.
     # Flask's default session is stored in a signed cookie in the browser.
-@app.route("/logout", methods=["POST"])
+@app.route("/api/logout", methods=["POST"])
 def logout():
     session.pop("username", None)
     return jsonify({"message": "Logged out successfully"}), 200
  
  
-@app.route("/me", methods=["GET"])
+@app.route("/api/me", methods=["GET"])
 def me():
     username = current_username()
     return jsonify({"logged_in": bool(username), "username": username}), 200
 
+
 # -----------------------------------------------------------------------------
 # CRUD ROUTES - HELP DESK TICKETS
 # -----------------------------------------------------------------------------
-@app.route("/inventory", methods=["GET"])
+
+@app.route("/api/inventory", methods=["GET"])
 def get_inventory():
     auth_error = login_required_json()
     if auth_error:
@@ -228,10 +237,201 @@ def get_inventory():
         items = inventory
     return jsonify(items), 200
 
+@app.route("/api/inventory/<int:item_id>", methods=["GET"])
+def get_item(item_id):
+    auth_error = login_required_json()
+    if auth_error:
+        return auth_error
+ 
+    item = find_item(item_id)
+    if not item:
+        return jsonify({"error": "Item not found"}), 404
+    return jsonify(item), 200
+ 
+ 
+@app.route("/api/inventory", methods=["POST"])
+def create_item():
+    auth_error = login_required_json()
+    if auth_error:
+        return auth_error
+ 
+    data = request.get_json(silent=True) or {}
+ 
+    price = parse_price(data.get("price"))
+    stock = parse_stock(data.get("stock"))
+    if price is None:
+        return jsonify({"error": "price must be a number >= 0"}), 400
+    if stock is None:
+        return jsonify({"error": "stock must be a whole number >= 0"}), 400
+ 
+    barcode = str(data.get("barcode", "")).strip()
+    new_item = {
+        "id": next_id(), "barcode": barcode, "status": 1, "price": price, "stock": stock,
+        "product": {f: str(data.get(f, "")).strip() for f in PRODUCT_FIELDS},
+    }
+ 
+    # Enrich from OpenFoodFacts when a barcode is given. A failing API must not
+    # block the employee, so we add the item anyway and return a warning.
+    warning = None
+    if barcode and data.get("enrich", True):
+        try:
+            result = fetch_product(barcode=barcode)
+            if result:
+                fill_missing_fields(new_item, result)
+            else:
+                warning = "Barcode not found on OpenFoodFacts"
+        except ExternalAPIError:
+            warning = "OpenFoodFacts is unavailable; item saved without extra details"
+ 
+    if not new_item["product"]["product_name"]:
+        return jsonify({"error": "product_name is required (or a barcode OpenFoodFacts knows)"}), 400
+ 
+    inventory.append(new_item)
+    response = dict(new_item)
+    if warning:
+        response["warning"] = warning
+    return jsonify(response), 201
+ 
+ 
+@app.route("/api/inventory/<int:item_id>", methods=["PATCH"])
+def update_item(item_id):
+    auth_error = login_required_json()
+    if auth_error:
+        return auth_error
+ 
+    item = find_item(item_id)
+    if not item:
+        return jsonify({"error": "Item not found"}), 404
+ 
+    data = request.get_json(silent=True) or {}
+ 
+    # Validate everything first so a bad field never leaves a half-updated item.
+    updates = {}
+    if "price" in data:
+        updates["price"] = parse_price(data["price"])
+        if updates["price"] is None:
+            return jsonify({"error": "price must be a number >= 0"}), 400
+    if "stock" in data:
+        updates["stock"] = parse_stock(data["stock"])
+        if updates["stock"] is None:
+            return jsonify({"error": "stock must be a whole number >= 0"}), 400
+    product_updates = {f: str(data[f]).strip() for f in PRODUCT_FIELDS if f in data}
+ 
+    if not updates and not product_updates:
+        return jsonify({"error": "No valid fields to update"}), 400
+    if "product_name" in product_updates and not product_updates["product_name"]:
+        return jsonify({"error": "product_name cannot be empty"}), 400
+ 
+    item.update(updates)
+    item["product"].update(product_updates)
+    return jsonify(item), 200
+ 
+ 
+@app.route("/api/inventory/<int:item_id>", methods=["DELETE"])
+def delete_item(item_id):
+    auth_error = login_required_json()
+    if auth_error:
+        return auth_error
+ 
+    item = find_item(item_id)
+    if not item:
+        return jsonify({"error": "Item not found"}), 404
+ 
+    inventory.remove(item)
+    return jsonify({"message": "Item deleted successfully"}), 200
 
+
+# -----------------------------------------------------------------------------
+# EXTERNAL API ROUTES
+# -----------------------------------------------------------------------------
+@app.route("/api/external/search", methods=["GET"])
+def external_search():
+    """GET /api/external/search?barcode=... or ?name=... (does NOT change inventory)."""
+    auth_error = login_required_json()
+    if auth_error:
+        return auth_error
+ 
+    barcode = request.args.get("barcode", "").strip()
+    name = request.args.get("name", "").strip()
+    if not barcode and not name:
+        return jsonify({"error": "Provide a barcode or a name"}), 400
+ 
+    try:
+        result = fetch_product(barcode=barcode or None, name=name or None)
+    except ExternalAPIError:
+        return jsonify({"error": "OpenFoodFacts is unavailable, try again later"}), 502
+ 
+    if not result:
+        return jsonify({"error": "Product not found on OpenFoodFacts"}), 404
+    return jsonify(result), 200
+ 
+ 
+@app.route("/api/inventory/<int:item_id>/enrich", methods=["POST"])
+def enrich_item(item_id):
+    """Fill empty details of a stored item from OpenFoodFacts (barcode, else name)."""
+    auth_error = login_required_json()
+    if auth_error:
+        return auth_error
+ 
+    item = find_item(item_id)
+    if not item:
+        return jsonify({"error": "Item not found"}), 404
+ 
+    try:
+        result = fetch_product(
+            barcode=item.get("barcode") or None,
+            name=None if item.get("barcode") else item["product"].get("product_name"),
+        )
+    except ExternalAPIError:
+        return jsonify({"error": "OpenFoodFacts is unavailable, try again later"}), 502
+ 
+    if not result:
+        return jsonify({"error": "Product not found on OpenFoodFacts"}), 404
+ 
+    fill_missing_fields(item, result)
+    return jsonify(item), 200
+ 
+ 
+@app.errorhandler(404)
+def not_found(_error):
+    return jsonify({"error": "Route not found"}), 404
+ 
+ 
+@app.errorhandler(405)
+def method_not_allowed(_error):
+    return jsonify({"error": "Method not allowed"}), 405
+ 
+ 
+ 
 # -----------------------------------------------------------------------------
 # COOKIE ROUTES
 # -----------------------------------------------------------------------------
+STOCK_FILTERS = ["All", "Low", "Out"]
+
+
+@app.route("/api/preferences", methods=["GET"])
+def get_preferences():
+    """Read the saved stock filter from the browser's cookie."""
+    stock_filter = request.cookies.get("stock_filter", "All")
+    if stock_filter not in STOCK_FILTERS:  # never trust a cookie value blindly
+        stock_filter = "All"
+    return jsonify({"stock_filter": stock_filter}), 200
+
+
+@app.route("/api/preferences", methods=["POST"])
+def save_preferences():
+    auth_error = login_required_json()
+    if auth_error:
+        return auth_error
+
+    data = request.get_json(silent=True) or {}
+    stock_filter = data.get("stock_filter", "All")
+    if stock_filter not in STOCK_FILTERS:
+        return jsonify({"error": "stock_filter must be All, Low or Out"}), 400
+
+    response = make_response(
+        jsonify({"message": "Preference saved", "stock_filter": stock_filter})
+    )
 
 
     # -------------------------------------------------------------------------
@@ -241,8 +441,31 @@ def get_inventory():
     # The browser sends this cookie back automatically on later requests.
     # We use max_age so it can remain after the browser is refreshed/reopened.
     # We are NOT storing a password or other sensitive information here.
+    response.set_cookie("stock_filter", stock_filter, max_age=60 * 60 * 24 * 7)
+
+    return response, 200
 
 
 # -----------------------------------------------------------------------------
 # CLIENT-SERVER / REQUEST INSPECTOR
 # -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# CLIENT-SERVER / REQUEST INSPECTOR
+# -----------------------------------------------------------------------------
+@app.route("/api/request-info", methods=["GET", "POST"])
+def request_info():
+    """Return information Flask received from the client/browser."""
+    return jsonify(
+        {
+            "method": request.method,
+            "path": request.path,
+            "query_parameters": request.args.to_dict(),
+            "json_body": request.get_json(silent=True),
+            "cookies": request.cookies.to_dict(),
+            "logged_in_user": current_username(),
+            "user_agent": request.headers.get("User-Agent"),
+        }
+    ), 200
+
+if __name__ == "__main__":
+    app.run(debug=True)
