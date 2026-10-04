@@ -7,7 +7,7 @@ import requests
 import app as app_module
 from app import ExternalAPIError, fetch_product, fill_missing_fields
 
-
+# A stand-in for the object requests.get() returns.
 def fake_response(payload=None, json_error=None, http_error=None):
     """A stand-in for the object requests.get() returns."""
     response = mock.Mock()
