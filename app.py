@@ -119,8 +119,50 @@ inventory = copy.deepcopy(SEED_INVENTORY)
 # -----------------------------------------------------------------------------
 # HELPER FUNCTIONS
 # -----------------------------------------------------------------------------
-
-
+def current_username():
+    return session.get("username")
+ 
+ 
+def login_required_json():
+    if not current_username():
+        return jsonify({"error": "Login required"}), 401 #No user logged in
+    return None
+ 
+#Linear search by ID: worst case O(n) for n items.
+def find_item(item_id):
+    for item in inventory:
+        if item["id"] == item_id:
+            return item
+    return None
+ 
+ 
+def next_id():
+    return max([item["id"] for item in inventory], default=0) + 1
+ 
+#Return a non-negative float rounded to 2 decimals, or None if invalid.
+def parse_price(value):
+    if isinstance(value, bool):
+        return None
+    try:
+        price = float(value)
+    except (TypeError, ValueError):
+        return None
+    if price != price or price < 0:  # price != price catches NaN
+        return None
+    return round(price, 2)
+ 
+#Return a non-negative int, or None if invalid.
+def parse_stock(value):
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, float) and not value.is_integer():
+        return None
+    try:
+        stock = int(value)
+    except (TypeError, ValueError):
+        return None
+    return stock if stock >= 0 else None
+ 
 
 # -----------------------------------------------------------------------------
 # PAGE ROUTES
