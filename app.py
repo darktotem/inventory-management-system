@@ -1,9 +1,11 @@
 import copy
 
+from flask_bcrypt import Bcrypt
 from flask import Flask, render_template, request, jsonify, session
 from werkzeug.security import generate_password_hash, check_password_hash
  
 app = Flask(__name__)
+bcrypt = Bcrypt(app)
 
 # Flask uses SECRET_KEY to sign the session cookie.
 # This helps Flask detect if someone has tampered with the session data.
@@ -16,6 +18,21 @@ OFF_HEADERS = {"User-Agent": "RetailInventoryAdmin/1.0 (student project)"}
 OFF_TIMEOUT = 5 
 
 # -----------------------------------------------------------------------------
+# PASSWORD HASHING (bcrypt)
+# -----------------------------------------------------------------------------
+
+def hash_password(password):
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+ 
+ 
+def verify_password(password, password_hash):
+    try:
+        return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+    except ValueError: 
+        return False
+ 
+
+# -----------------------------------------------------------------------------
 # IN-MEMORY DATA
 # -----------------------------------------------------------------------------
 # We are using Python lists so that students can focus on Flask concepts first.
@@ -25,7 +42,7 @@ users = [
     {
         "id": 1, 
         "username": "admin", 
-        "password_hash": generate_password_hash("admin123")
+        "password_hash": hash_password("admin123")
         
     }
 ]
