@@ -182,13 +182,22 @@ def login():
     password = str(data.get("password", ""))
  
     user = next((u for u in users if u["username"] == username), None)
-    if not user or not verify_password(password, user["password_hash"]):
+
+    if not user["username"] or not verify_password(password, user["password_hash"]):
         return jsonify({"error": "Invalid username or password"}), 401
  
     session["username"] = username  # Flask remembers this across requests
     return jsonify({"message": "Login successful", "username": username}), 200
  
- 
+
+  # -------------------------------------------------------------------------
+    # SESSION EXAMPLE
+    # -------------------------------------------------------------------------
+    # A session helps Flask remember information across multiple requests.
+    # After login, we save the username in the session.
+    # On later requests, Flask can read session["username"] and know who is using
+    # the application without asking for the username again on every request.
+    # Flask's default session is stored in a signed cookie in the browser.
 @app.route("/logout", methods=["POST"])
 def logout():
     session.pop("username", None)
@@ -199,22 +208,25 @@ def logout():
 def me():
     username = current_username()
     return jsonify({"logged_in": bool(username), "username": username}), 200
- 
-  # -------------------------------------------------------------------------
-    # SESSION EXAMPLE
-    # -------------------------------------------------------------------------
-    # A session helps Flask remember information across multiple requests.
-    # After login, we save the username in the session.
-    # On later requests, Flask can read session["username"] and know who is using
-    # the application without asking for the username again on every request.
-    # Flask's default session is stored in a signed cookie in the browser.
-
-
 
 # -----------------------------------------------------------------------------
 # CRUD ROUTES - HELP DESK TICKETS
 # -----------------------------------------------------------------------------
-
+@app.route("/inventory", methods=["GET"])
+def get_inventory():
+    auth_error = login_required_json()
+    if auth_error:
+        return auth_error
+ 
+    # Optional search: GET /inventory?q=milk matches product name or brand.
+    q = request.args.get("q", "").strip().lower()
+    if q:
+        items = [i for i in inventory
+                 if q in i["product"].get("product_name", "").lower()
+                 or q in i["product"].get("brands", "").lower()]
+    else:
+        items = inventory
+    return jsonify(items), 200
 
 
 # -----------------------------------------------------------------------------
