@@ -73,19 +73,5 @@
       "quantity": "500 g",
       "nutriscore_grade": "a"
     }
-  },
-  {
-    "id": 6,
-    "barcode": "77712345890",
-    "status": 1,
-    "price": 250.0,
-    "stock": 45,
-    "product": {
-      "product_name": "BlueBand",
-      "brands": "Mangarine",
-      "ingredients_text": "",
-      "categories": "",
-      "quantity": ""
-    }
   }
 ]
