@@ -21,7 +21,6 @@ cli-inventory-management-system/
 ├── cli.py                 # CLI client (menu mode + one-line commands)
 ├── requirements.txt       # Python dependencies
 ├── README.md
-├── .gitignore
 ├── data/
 │   └── inventory.json     # Saved inventory (created automatically, not committed)
 ├── templates/
