@@ -323,7 +323,7 @@ def logout():
 @app.route("/me", methods=["GET"])
 def me():
     username = current_username()
-    return jsonify({"logged_in": bool(username), "username": username}), 200
+    return jsonify({"logged_in": True, "username": username}), 200
 
 
 # -----------------------------------------------------------------------------
@@ -335,26 +335,18 @@ def get_inventory():
     if auth_error:
         return auth_error
 
-    # Optional search: GET /inventory?q=milk matches product name or brand.
-    q = request.args.get("q", "").strip().lower()
-    if q:
-        items = [i for i in inventory
-                 if q in i["product"].get("product_name", "").lower()
-                 or q in i["product"].get("brands", "").lower()]
-    else:
-        items = inventory
-    return jsonify(items), 200
-
 
 @app.route("/inventory/<int:item_id>", methods=["GET"])
 def get_item(item_id):
     auth_error = login_required_json()
     if auth_error:
         return auth_error
-
+    
+    # READ one item using the O(n) linear search helper above
     item = find_item(item_id)
     if not item:
         return jsonify({"error": "Item not found"}), 404
+    
     return jsonify(item), 200
 
 
