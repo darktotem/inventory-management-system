@@ -14,7 +14,7 @@ class CLIError(Exception):
 
 
 def get_session():
-    """Log in and return a requests.Session that carries the session cookie."""
+    # Log in and return a requests.Session that carries the session cookie.
     session = requests.Session()
     resp = session.post(f"{BASE_URL}/login", json={"username": USERNAME, "password": PASSWORD}, timeout=10)
     if resp.status_code != 200:
@@ -23,7 +23,7 @@ def get_session():
 
 
 def call(method, path, **kwargs):
-    """Send one request to the Flask API and return the decoded JSON body."""
+    # Send one request to the Flask API and return the decoded JSON body.
     try:
         session = get_session()
         resp = session.request(method, f"{BASE_URL}{path}", timeout=10, **kwargs)
@@ -144,7 +144,7 @@ def build_parser():
 
 
 def ask(prompt, cast=str, required=True):
-    """Keep asking until the input is valid. Optional fields return None when left blank."""
+    # Keep asking until the input is valid. Optional fields return None when left blank.
     while True:
         raw = input(prompt).strip()
         if not raw:
@@ -159,7 +159,7 @@ def ask(prompt, cast=str, required=True):
 
 
 def run_menu():
-    """Interactive mode: python cli.py (no arguments)."""
+    # Interactive mode: python cli.py (no arguments).
     ns = argparse.Namespace
     actions = {
         "1": ("List items", lambda: cmd_list(ns(search=ask("Search (blank for all): ", required=False)))),

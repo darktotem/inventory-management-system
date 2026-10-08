@@ -135,7 +135,7 @@ DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "in
 
 
 def load_inventory():
-    """Load items from data/inventory.json, or fall back to the seed data."""
+    #Load items from data/inventory.json, or fall back to the seed data.
     try:
         with open(DATA_FILE, encoding="utf-8") as f:
             items = json.load(f)
@@ -220,7 +220,7 @@ def parse_stock(value):
 # EXTERNAL API (OpenFoodFacts)
 # -----------------------------------------------------------------------------
 def _normalize_product(raw):
-    """Keep only the fields we care about from an OpenFoodFacts product."""
+    # Keep only the fields we care about from an OpenFoodFacts product.
     return {
         "product_name": raw.get("product_name", "") or "",
         "brands": raw.get("brands", "") or "",
@@ -232,12 +232,10 @@ def _normalize_product(raw):
 
 
 def fetch_product(barcode=None, name=None):
-    """
-    Look a product up on OpenFoodFacts by barcode (preferred) or by name.
+    """Look a product up on OpenFoodFacts by barcode (preferred) or by name. 
+    Returns {"status": 1, "barcode": "...", "product": {...}} or None if not found. 
+    Raises ExternalAPIError if the network/API fails, ValueError if no input given."""
 
-    Returns {"status": 1, "barcode": "...", "product": {...}} or None if not found.
-    Raises ExternalAPIError if the network/API fails, ValueError if no input given.
-    """
     if not barcode and not name:
         raise ValueError("barcode or name is required")
 
@@ -272,7 +270,7 @@ def fetch_product(barcode=None, name=None):
 
 
 def fill_missing_fields(item, api_result):
-    """Copy API details into an item, but never overwrite what we already have."""
+    #Copy API details into an item, but never overwrite what we already have.
     for key, value in api_result["product"].items():
         if value and not item["product"].get(key):
             item["product"][key] = value
@@ -460,7 +458,7 @@ def delete_item(item_id):
 # -----------------------------------------------------------------------------
 @app.route("/external/search", methods=["GET"])
 def external_search():
-    """GET /external/search?barcode=... or ?name=... (does NOT change inventory)."""
+    #GET /external/search?barcode=... or ?name=... (does NOT change inventory)
     auth_error = login_required_json()
     if auth_error:
         return auth_error
@@ -482,7 +480,7 @@ def external_search():
 
 @app.route("/inventory/<int:item_id>/enrich", methods=["POST"])
 def enrich_item(item_id):
-    """Fill empty details of a stored item from OpenFoodFacts (barcode, else name)."""
+    #Fill empty details of a stored item from OpenFoodFacts (barcode, else name).
     auth_error = login_required_json()
     if auth_error:
         return auth_error
@@ -525,7 +523,7 @@ STOCK_FILTERS = ["All", "Low", "Out"]
 
 @app.route("/preferences", methods=["GET"])
 def get_preferences():
-    """Read the saved stock filter from the browser's cookie."""
+    #Read the saved stock filter from the browser's cookie.
     stock_filter = request.cookies.get("stock_filter", "All")
     if stock_filter not in STOCK_FILTERS:  # never trust a cookie value blindly
         stock_filter = "All"
@@ -564,7 +562,7 @@ def save_preferences():
 # -----------------------------------------------------------------------------
 @app.route("/request-info", methods=["GET", "POST"])
 def request_info():
-    """Return information Flask received from the client/browser."""
+    #turn information Flask received from the client/browser.
     return jsonify(
         {
             "method": request.method,
